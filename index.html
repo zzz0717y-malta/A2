@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>图像滤波实验台</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Pattern Recognition / Image Processing A2</p>
+          <h1>图像滤波实验台</h1>
+        </div>
+        <div class="source-actions">
+          <span id="sourceName" class="source-name">内置样例</span>
+          <label class="button primary" for="imageUpload">上传图像</label>
+          <input id="imageUpload" type="file" accept="image/*" hidden />
+          <button id="sampleButton" class="button" type="button">样例</button>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <aside class="control-panel">
+          <nav class="tabs" aria-label="实验模块">
+            <button class="tab-button active" type="button" data-tab="spatial">空间域</button>
+            <button class="tab-button" type="button" data-tab="gradient">梯度</button>
+            <button class="tab-button" type="button" data-tab="frequency">频域</button>
+            <button class="tab-button" type="button" data-tab="spectra">谱图变化</button>
+          </nav>
+
+          <section class="panel active" data-panel="spatial">
+            <label class="field">
+              <span>滤波器</span>
+              <select id="filterMode">
+                <option value="box">Box 均值</option>
+                <option value="gaussian">Gaussian 高斯</option>
+                <option value="median">Median 中值</option>
+                <option value="sobel-mag">Sobel 幅值</option>
+                <option value="sobel-x">Sobel X</option>
+                <option value="sobel-y">Sobel Y</option>
+                <option value="laplacian">Laplacian</option>
+                <option value="sharpen">锐化</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>核尺寸 <b id="kernelValue">5</b></span>
+              <input id="kernelSize" type="range" min="3" max="9" step="2" value="5" />
+            </label>
+            <label class="field">
+              <span>Sigma <b id="sigmaValue">1.4</b></span>
+              <input id="sigma" type="range" min="0.4" max="4" step="0.1" value="1.4" />
+            </label>
+          </section>
+
+          <section class="panel" data-panel="gradient">
+            <label class="field">
+              <span>X <b id="roiXValue">0</b></span>
+              <input id="roiX" type="range" min="0" max="256" value="80" />
+            </label>
+            <label class="field">
+              <span>Y <b id="roiYValue">0</b></span>
+              <input id="roiY" type="range" min="0" max="256" value="52" />
+            </label>
+            <label class="field">
+              <span>宽 <b id="roiWValue">96</b></span>
+              <input id="roiW" type="range" min="12" max="256" value="96" />
+            </label>
+            <label class="field">
+              <span>高 <b id="roiHValue">72</b></span>
+              <input id="roiH" type="range" min="12" max="256" value="72" />
+            </label>
+          </section>
+
+          <section class="panel" data-panel="frequency">
+            <label class="field">
+              <span>FFT 尺寸</span>
+              <select id="fftSize">
+                <option value="128">128 x 128</option>
+                <option value="256">256 x 256</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>频域滤波</span>
+              <select id="freqFilter">
+                <option value="ideal-low">理想低通</option>
+                <option value="ideal-high">理想高通</option>
+                <option value="gaussian-low">高斯低通</option>
+                <option value="gaussian-high">高斯高通</option>
+                <option value="band-pass">带通</option>
+                <option value="band-stop">带阻</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>半径 <b id="radiusValue">28</b></span>
+              <input id="freqRadius" type="range" min="4" max="96" value="28" />
+            </label>
+            <label class="field">
+              <span>带宽 <b id="bandValue">18</b></span>
+              <input id="freqBand" type="range" min="4" max="80" value="18" />
+            </label>
+          </section>
+
+          <section class="panel" data-panel="spectra">
+            <label class="field">
+              <span>旋转角 <b id="angleValue">30°</b></span>
+              <input id="rotateAngle" type="range" min="-90" max="90" value="30" />
+            </label>
+            <label class="field">
+              <span>平移 X <b id="shiftXValue">18</b></span>
+              <input id="shiftX" type="range" min="-48" max="48" value="18" />
+            </label>
+            <label class="field">
+              <span>平移 Y <b id="shiftYValue">-12</b></span>
+              <input id="shiftY" type="range" min="-48" max="48" value="-12" />
+            </label>
+            <label class="field">
+              <span>缩放 <b id="scaleValue">0.75</b></span>
+              <input id="scaleAmount" type="range" min="0.55" max="1.6" step="0.05" value="0.75" />
+            </label>
+          </section>
+        </aside>
+
+        <section class="content">
+          <section class="view active" data-view="spatial">
+            <div class="view-grid two">
+              <article class="card">
+                <div class="card-head">
+                  <h2>原图</h2>
+                  <span id="sourceSize" class="pill">--</span>
+                </div>
+                <canvas id="originalCanvas"></canvas>
+              </article>
+              <article class="card">
+                <div class="card-head">
+                  <h2>输出</h2>
+                  <span id="spatialRuntime" class="pill">-- ms</span>
+                </div>
+                <canvas id="filteredCanvas"></canvas>
+              </article>
+            </div>
+            <div id="spatialMetrics" class="metric-strip"></div>
+            <div id="spatialCompare" class="compare-grid"></div>
+          </section>
+
+          <section class="view" data-view="gradient">
+            <div class="view-grid two">
+              <article class="card">
+                <div class="card-head">
+                  <h2>局部区域</h2>
+                  <span id="roiLabel" class="pill">--</span>
+                </div>
+                <canvas id="gradientCanvas"></canvas>
+              </article>
+              <article class="card">
+                <div class="card-head">
+                  <h2>方向演示</h2>
+                  <span id="directionLabel" class="pill">--</span>
+                </div>
+                <canvas id="patchCanvas" width="520" height="340"></canvas>
+              </article>
+            </div>
+            <div id="gradientMetrics" class="metric-strip"></div>
+            <article class="card">
+              <div class="card-head">
+                <h2>方向直方图</h2>
+                <span class="pill">0° - 360°</span>
+              </div>
+              <canvas id="histCanvas" width="960" height="220"></canvas>
+            </article>
+          </section>
+
+          <section class="view" data-view="frequency">
+            <div class="view-grid three">
+              <article class="card">
+                <div class="card-head">
+                  <h2>FFT 输入</h2>
+                  <span id="fftLabel" class="pill">128</span>
+                </div>
+                <canvas id="freqOriginalCanvas"></canvas>
+              </article>
+              <article class="card">
+                <div class="card-head">
+                  <h2>频谱</h2>
+                  <span class="pill">log |F(u,v)|</span>
+                </div>
+                <canvas id="spectrumCanvas"></canvas>
+              </article>
+              <article class="card">
+                <div class="card-head">
+                  <h2>滤波器</h2>
+                  <span id="maskLabel" class="pill">--</span>
+                </div>
+                <canvas id="maskCanvas"></canvas>
+              </article>
+              <article class="card">
+                <div class="card-head">
+                  <h2>滤波后频谱</h2>
+                  <span id="energyLabel" class="pill">--</span>
+                </div>
+                <canvas id="filteredSpectrumCanvas"></canvas>
+              </article>
+              <article class="card wide">
+                <div class="card-head">
+                  <h2>逆变换结果</h2>
+                  <span id="inverseLabel" class="pill">IFFT</span>
+                </div>
+                <canvas id="freqResultCanvas"></canvas>
+              </article>
+            </div>
+          </section>
+
+          <section class="view" data-view="spectra">
+            <div id="spectrumCompareGrid" class="spectra-grid"></div>
+            <div id="spectrumNotes" class="notes-grid"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
